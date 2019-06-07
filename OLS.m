@@ -1,5 +1,5 @@
 % Author: José Reinaldo da C.S.A.V.S. Neto
-% Universidade de Brasilia
+% Matrícula: 14/0169148
 % Orthogonal Least Squares training for NARMAX model
 
 function [narmax, y_val, Y_OSA] = OLS()

@@ -1,6 +1,7 @@
-% Author: José Reinaldo da C.S.A.V.S. Neto
-% Universidade de Brasilia
-% Colunm update for LASSO regularization
+% Autor: José Reinaldo da C.S.A.V.S. Neto
+% Matrícula: 14/0169148
+% Build regressor for NARMAX model based on input(u), output(y) and
+% error(e)
 
 function [ P ] = partial_regressor_matrix( column, narmax, ny, nu, ne, y, u, e )
 

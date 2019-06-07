@@ -1,6 +1,6 @@
 % Autor: José Reinaldo da C.S.A.V.S. Neto
-% Universidade de Brasilia
-% Function to build regressor matrix for NARMAX model based on input(u), output(y) and
+% Matrícula: 14/0169148
+% Build regressor for NARMAX model based on input(u), output(y) and
 % error(e)
 
 function [P] = regressor_matrix(narmax, ny, nu, ne, y, u, e)

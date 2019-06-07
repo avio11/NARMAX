@@ -1,5 +1,5 @@
 % Autor: José Reinaldo da C.S.A.V.S. Neto
-% Universidade de Brasilia
+% Matrícula: 14/0169148
 % Function to create NARMAX's full, process and error-correlated models
 function [ narmax ] = NARMAX( ny, nu, ne, nl )
 
