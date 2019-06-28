@@ -44,53 +44,75 @@ narmax = NARMAX(ny, nu, ne, nl); % Create NARMAX model
 narmax.parameters = zeros(size(narmax.full_model,1),1);
 %--------------------------------------------------------------------------
 % LASSO coordinate descent implementation
-lambda = 0.01;
-e_lasso = y(max(max(nu, ny),ne)+1:size(y,1));
-iterations = 100;
-tolerance = 0.001;
-diff = 100;
-past_theta = narmax.parameters;
-
-P = regressor_matrix(narmax, ny, nu, ne, y, u, e);
-aux = partial_regressor_matrix(1, narmax, ny, nu, ne, y, u, e);
-% for i=1:iterations      % Stop condition
-while diff >= tolerance
-    for j=1:size(P,2)   % For each parameter theta
-        P(:,j) = partial_regressor_matrix(j, narmax, ny, nu, ne, y, u, e);   % STEP 1
-        narmax.parameters(j) = ( 1/(P(:,j)'*P(:,j) ) )*wthresh((e_lasso+narmax.parameters(j)*P(:,j))'*P(:,j),'s',lambda); % STEP 2
-        e_lasso = y(max(max(nu, ny),ne)+1:size(y,1))-P*narmax.parameters; % STEP 3
-    end
-    diff = sum(abs(past_theta-narmax.parameters));
+lambda = 10;
+for it = 1:10
+    e_lasso = y(max(max(nu, ny),ne)+1:size(y,1));
+    iterations = 100;
+    tolerance = 0.001;
+    diff = 100;
     past_theta = narmax.parameters;
-    fprintf('diff %.4f\n', diff);
-end
 
+    P = regressor_matrix(narmax, ny, nu, ne, y, u, e);
+    aux = partial_regressor_matrix(1, narmax, ny, nu, ne, y, u, e);
+    % for i=1:iterations      % Stop condition
+    while diff >= tolerance
+        for j=1:size(P,2)   % For each parameter theta
+            P(:,j) = partial_regressor_matrix(j, narmax, ny, nu, ne, y, u, e);   % STEP 1
+            narmax.parameters(j) = ( 1/(P(:,j)'*P(:,j) ) )*wthresh((e_lasso+narmax.parameters(j)*P(:,j))'*P(:,j),'s',lambda); % STEP 2
+            e_lasso = y(max(max(nu, ny),ne)+1:size(y,1))-P*narmax.parameters; % STEP 3
+%             e_lasso = e_lasso - P(:,j)*(narmax.parameters(j) - past_theta(j));
+        end
+        diff = sum(abs(past_theta-narmax.parameters));
+        past_theta = narmax.parameters;
+        fprintf('diff %.4f\n', diff);
+    end
+end  
 % Print of parameters and respective terms
+fprintf('\t\t\t\t\t[');
+for i=1:ny
+    fprintf('\ty[k-%d]', i);
+end
+for i=1:nu
+    fprintf('\tu[k-%d]', i);
+end
+for i=1:ne
+    fprintf('\te[k-%d]', i);
+end
+fprintf(']\n');
 for i=1:size(narmax.full_model,1)
    fprintf('%.4f\t\t\t\t[', narmax.parameters(i));
    for j=1:size(narmax.full_model,2)
-       fprintf('%d ', narmax.full_model(i,j));
+       fprintf('\t\t%d ', narmax.full_model(i,j));
    end
    fprintf(']\n');
 end
 
 
-% Simulation of NARMAX (no MA terms)
+% Simulation of NARMAX (but only NARX terms)
 
 Y_FR(1:100) = 0;
 Y_OSA(1:100) = 0;
 
 for i=max(nu, ny):size(y,1)-1
-    
     Y_FR(i+1) = narmax.parameters(3)*u(i-1) + narmax.parameters(5)*Y_FR(i) + narmax.parameters(14)*Y_FR(i)*u(i-1) + narmax.parameters(18)*u(i-1)^2 + narmax.parameters(20)*Y_FR(i)^2;
     Y_OSA(i+1) = narmax.parameters(3)*u(i-1) + narmax.parameters(5)*y(i) + narmax.parameters(14)*y(i)*u(i-1) + narmax.parameters(18)*u(i-1)^2 + narmax.parameters(20)*y(i)^2;
 end
 
+% Plot Free-run and one-step ahead
+figure(1)
 plot(y, 'r');
 hold on
 plot(Y_FR, 'g');
-plot(Y_OSA, 'b');
+plot(Y_OSA, 'k');
 legend('Expected output', 'Free run', 'One-step ahead');
 title('LASSO training');
 hold off
 
+
+% Mean square error (MSE) of FR and OSA simulations
+mse_osa = ((y-Y_OSA')'*(y-Y_OSA'))/length(y);
+mse_fr  = ((y-Y_FR')'*(y-Y_FR'))/length(y);
+figure(2)
+c = categorical({'OSA MSE','FR MSE'});
+bar(c, [mse_osa mse_fr]);
+title('Mean Square Error of Simulation')
